@@ -1,9 +1,12 @@
 import logging
+import os
+import tkinter as tk
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
-import os
+from tkinter import messagebox
+from tkinter import ttk
 
 # Configure logging
 logging.basicConfig(filename='encryption_app.log', level=logging.INFO,
@@ -59,11 +62,35 @@ def decrypt_message(private_key, ciphertext):
     )
     return decrypted_message
 
+# Function to toggle dark theme
+def toggle_dark_theme():
+    current_theme = style.theme_use()
+    if current_theme == "light":
+        style.theme_use("dark")
+    else:
+        style.theme_use("light")
+
 # Configure logger
 logger = logging.getLogger('encryption_app')
 
+# Create the main window
+root = tk.Tk()
+root.title("Encryption App")
+
+# Set the style for dark and light themes
+style = ttk.Style()
+style.theme_use("light")
+
+# Create a frame for the main content
+content_frame = ttk.Frame(root, padding=10)
+content_frame.grid(row=0, column=0, sticky="nsew")
+
+# Create a dark theme toggle button
+dark_theme_button = ttk.Button(content_frame, text="Toggle Dark Theme", command=toggle_dark_theme)
+dark_theme_button.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+
 # User interaction: Generate or load keys
-key_choice = input("Generate new keys or use existing keys? (new/existing): ").lower()
+key_choice = tk.simpledialog.askstring("Key Choice", "Generate new keys or use existing keys? (new/existing)")
 
 if key_choice == "new":
     private_key, public_key = generate_key_pair()
@@ -78,66 +105,8 @@ else:
         logger.info("Key pair loaded from files.")
     except FileNotFoundError:
         logger.error("Key files not found. Please generate new keys.")
-        print("Key files not found. Please generate new keys.")
+        messagebox.showerror("Error", "Key files not found. Please generate new keys.")
         private_key, public_key = generate_key_pair()
 
-# User interaction: Choose between message and file encryption
-encrypt_choice = input("Encrypt a message or a file? (message/file): ").lower()
-
-if encrypt_choice == "message":
-    # User interaction: Enter a message to encrypt
-    message = input("Enter a message to encrypt: ").encode()
-    ciphertext = encrypt_message(public_key, message)
-    print(f"Encrypted message: {ciphertext}")
-    logger.info("Message encrypted.")
-
-    # User interaction: Decrypt the message
-    decrypt_choice = input("Decrypt the message? (yes/no): ").lower()
-
-    if decrypt_choice == "yes":
-        try:
-            decrypted_message = decrypt_message(private_key, ciphertext)
-            print(f"Decrypted message: {decrypted_message.decode()}")
-            logger.info("Message decrypted.")
-        except ValueError:
-            print("Decryption failed. Incorrect private key or ciphertext.")
-            logger.error("Decryption failed.")
-    else:
-        print("Message not decrypted.")
-        logger.info("Message not decrypted.")
-
-elif encrypt_choice == "file":
-    # User interaction: Upload a file
-    file_path = input("Enter the path of the file to encrypt: ")
-
-    if os.path.exists(file_path):
-        with open(file_path, "rb") as file:
-            file_content = file.read()
-
-        ciphertext = encrypt_message(public_key, file_content)
-        with open("encrypted_file.bin", "wb") as encrypted_file:
-            encrypted_file.write(ciphertext)
-        print("File encrypted and saved as 'encrypted_file.bin.")
-        logger.info(f"File '{file_path}' encrypted and saved.")
-
-        decrypt_choice = input("Decrypt the file? (yes/no): ").lower()
-
-        if decrypt_choice == "yes":
-            with open("encrypted_file.bin", "rb") as encrypted_file:
-                ciphertext = encrypted_file.read()
-
-            try:
-                decrypted_message = decrypt_message(private_key, ciphertext)
-                with open("decrypted_file.bin", "wb") as decrypted_file:
-                    decrypted_file.write(decrypted_message)
-                print("File decrypted and saved as 'decrypted_file.bin.")
-                logger.info("File decrypted and saved.")
-            except ValueError:
-                print("Decryption failed. Incorrect private key or ciphertext.")
-                logger.error("Decryption failed.")
-        else:
-            print("File not decrypted.")
-            logger.info("File not decrypted.")
-    else:
-        print("File not found.")
-        logger.error(f"File '{file_path}' not found.")
+# Run the main loop
+root.mainloop()
