@@ -1,3 +1,20 @@
+# Ignore Python virtual environment files
+venv/
+
+# Ignore log files
+*.log
+
+# Ignore compiled Python files
+__pycache__/
+
+# Ignore generated key files
+private_key.pem
+public_key.pem
+
+# Ignore generated encrypted and decrypted files
+encrypted_file.bin
+decrypted_file.bin
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
