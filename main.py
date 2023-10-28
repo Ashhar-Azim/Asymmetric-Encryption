@@ -1,8 +1,13 @@
+import logging
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 import os
+
+# Configure logging
+logging.basicConfig(filename='encryption_app.log', level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Function to generate key pair
 def generate_key_pair():
@@ -54,11 +59,15 @@ def decrypt_message(private_key, ciphertext):
     )
     return decrypted_message
 
+# Configure logger
+logger = logging.getLogger('encryption_app')
+
 # User interaction: Generate or load keys
 key_choice = input("Generate new keys or use existing keys? (new/existing): ").lower()
 
 if key_choice == "new":
     private_key, public_key = generate_key_pair()
+    logger.info("New key pair generated.")
 else:
     try:
         with open("private_key.pem", "rb") as private_key_file:
@@ -66,7 +75,9 @@ else:
 
         with open("public_key.pem", "rb") as public_key_file:
             public_key = serialization.load_pem_public_key(public_key_file.read())
+        logger.info("Key pair loaded from files.")
     except FileNotFoundError:
+        logger.error("Key files not found. Please generate new keys.")
         print("Key files not found. Please generate new keys.")
         private_key, public_key = generate_key_pair()
 
@@ -78,6 +89,7 @@ if encrypt_choice == "message":
     message = input("Enter a message to encrypt: ").encode()
     ciphertext = encrypt_message(public_key, message)
     print(f"Encrypted message: {ciphertext}")
+    logger.info("Message encrypted.")
 
     # User interaction: Decrypt the message
     decrypt_choice = input("Decrypt the message? (yes/no): ").lower()
@@ -86,10 +98,13 @@ if encrypt_choice == "message":
         try:
             decrypted_message = decrypt_message(private_key, ciphertext)
             print(f"Decrypted message: {decrypted_message.decode()}")
+            logger.info("Message decrypted.")
         except ValueError:
             print("Decryption failed. Incorrect private key or ciphertext.")
+            logger.error("Decryption failed.")
     else:
         print("Message not decrypted.")
+        logger.info("Message not decrypted.")
 
 elif encrypt_choice == "file":
     # User interaction: Upload a file
@@ -102,7 +117,8 @@ elif encrypt_choice == "file":
         ciphertext = encrypt_message(public_key, file_content)
         with open("encrypted_file.bin", "wb") as encrypted_file:
             encrypted_file.write(ciphertext)
-        print("File encrypted and saved as 'encrypted_file.bin'.")
+        print("File encrypted and saved as 'encrypted_file.bin.")
+        logger.info(f"File '{file_path}' encrypted and saved.")
 
         decrypt_choice = input("Decrypt the file? (yes/no): ").lower()
 
@@ -114,10 +130,14 @@ elif encrypt_choice == "file":
                 decrypted_message = decrypt_message(private_key, ciphertext)
                 with open("decrypted_file.bin", "wb") as decrypted_file:
                     decrypted_file.write(decrypted_message)
-                print("File decrypted and saved as 'decrypted_file.bin'.")
+                print("File decrypted and saved as 'decrypted_file.bin.")
+                logger.info("File decrypted and saved.")
             except ValueError:
                 print("Decryption failed. Incorrect private key or ciphertext.")
+                logger.error("Decryption failed.")
         else:
             print("File not decrypted.")
+            logger.info("File not decrypted.")
     else:
         print("File not found.")
+        logger.error(f"File '{file_path}' not found.")
